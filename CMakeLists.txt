@@ -14,6 +14,12 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
+add_compile_options(
+    -Wno-unguarded-availability-new
+    -Wno-deprecated-declarations
+    -Wno-nonportable-include-path
+)
+
 # PIC required for objects targets linked into shared MoltenVK
 if(BUILD_SHARED_LIBS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -21,17 +27,36 @@ endif()
 
 # Required Apple Frameworks
 find_library(METAL_FRAMEWORK Metal)
-find_library(FOUNDATION_FRAMEWORK Foundation)
-find_library(QUARTZ_CORE_FRAMEWORK QuartzCore)
-find_library(APPKIT_FRAMEWORK AppKit)
-find_library(IOSURFACE_FRAMEWORK IOSurface)
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    find_library(IOKIT_FRAMEWORK IOKit)
-else()
-    find_library(IOKIT_FRAMEWORK UIKit)
+if(NOT METAL_FRAMEWORK)
+    message(FATAL_ERROR "Metal framework not found")
 endif()
-
+find_library(FOUNDATION_FRAMEWORK Foundation)
+if(NOT FOUNDATION_FRAMEWORK)
+    message(FATAL_ERROR "Foundation framework not found")
+endif()
+find_library(QUARTZ_CORE_FRAMEWORK QuartzCore)
+if(NOT QUARTZ_CORE_FRAMEWORK)
+    message(FATAL_ERROR "QuartzCore framework not found")
+endif()
+find_library(APPKIT_FRAMEWORK AppKit)
+if(NOT APPKIT_FRAMEWORK)
+    message(FATAL_ERROR "AppKit framework not found")
+endif()
+find_library(IOSURFACE_FRAMEWORK IOSurface)
+if(NOT IOSURFACE_FRAMEWORK)
+    message(FATAL_ERROR "IOSurface framework not found")
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    find_library(IO_OR_UI_KIT_FRAMEWORK IOKit)
+    if(NOT IO_OR_UI_KIT_FRAMEWORK)
+        message(FATAL_ERROR "IOKit framework not found")
+    endif()
+else()
+    find_library(IO_OR_UI_KIT_FRAMEWORK UIKit)
+    if(NOT IO_OR_UI_KIT_FRAMEWORK)
+        message(FATAL_ERROR "UIKit framework not found")
+    endif()
+endif()
 
 set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source_subfolder)
 
@@ -112,7 +137,7 @@ target_link_libraries(MoltenVK PRIVATE
     ${QUARTZ_CORE_FRAMEWORK}
     ${APPKIT_FRAMEWORK}
     ${IOSURFACE_FRAMEWORK}
-    ${IOKIT_FRAMEWORK}
+    ${IO_OR_UI_KIT_FRAMEWORK}
 )
 
 install(
