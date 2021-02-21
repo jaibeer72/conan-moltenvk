@@ -30,6 +30,8 @@ class MoltenVKConan(ConanFile):
     def configure(self):
         if self.options.shared:
             del self.options.fPIC
+        if self.settings.compiler.get_safe("cppstd"):
+            tools.check_min_cppstd(self, 11)
         if self.settings.os not in ["Macos", "iOS", "tvOS"]:
             raise ConanInvalidConfiguration("MoltenVK only supported on MacOS, iOS and tvOS")
 
@@ -79,7 +81,8 @@ class MoltenVKConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["MoltenVK"]
-        self.cpp_info.frameworks = [
-            "CoreFoundation", "CoreGraphics", "QuartzCore", "Foundation",
-            "IOKit", "AppKit", "IOSurface", "Metal"
-        ]
+        self.cpp_info.frameworks = ["Metal", "Foundation", "QuartzCore", "AppKit", "IOSurface"]
+        if self.settings.os == "Macos":
+            self.cpp_info.frameworks.append("IOKit")
+        elif self.settings.os in ["iOS", "tvOS"]:
+            self.cpp_info.frameworks.append("UIKit")

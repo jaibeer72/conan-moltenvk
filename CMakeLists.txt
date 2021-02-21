@@ -4,6 +4,12 @@ project(MoltenVK)
 include(conanbuildinfo.cmake)
 conan_basic_setup()
 
+if(NOT (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR
+        CMAKE_SYSTEM_NAME STREQUAL "iOS" OR
+        CMAKE_SYSTEM_NAME STREQUAL "tvOS"))
+    message(FATAL_ERROR "MoltenVK only supports MacOS, iOS and tvOS")
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
@@ -14,14 +20,18 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 # Required Apple Frameworks
-find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation)
-find_library(CORE_GRAPHICS_FRAMEWORK CoreGraphics)
-find_library(QUARTZ_CORE_FRAMEWORK QuartzCore)
+find_library(METAL_FRAMEWORK Metal)
 find_library(FOUNDATION_FRAMEWORK Foundation)
-find_library(IOKIT_FRAMEWORK IOKit)
+find_library(QUARTZ_CORE_FRAMEWORK QuartzCore)
 find_library(APPKIT_FRAMEWORK AppKit)
 find_library(IOSURFACE_FRAMEWORK IOSurface)
-find_library(METAL_FRAMEWORK Metal)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    find_library(IOKIT_FRAMEWORK IOKit)
+else()
+    find_library(IOKIT_FRAMEWORK UIKit)
+endif()
+
 
 set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source_subfolder)
 
@@ -29,7 +39,7 @@ set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source_subfolder)
 # * direct dependencies:
 #   - external: None
 #   - internal: None
-#   - frameworks: Foundation)
+#   - frameworks: Foundation
 file(GLOB MVK_COMMON_SOURCES ${PROJECT_DIR}/common/*.mm)
 add_library(MoltenVKCommon OBJECT ${MVK_COMMON_SOURCES})
 
@@ -53,7 +63,7 @@ target_include_directories(MoltenVKShaderConverter PUBLIC
 # * direct dependencies:
 #   - external: None
 #   - internal: MoltenVKShaderConverter and MoltenVKCommon
-#   - frameworks: Foundation and Metal
+#   - frameworks: Metal and Foundation
 file(GLOB MVK_SCT_SOURCES
     ${PROJECT_DIR}/MoltenVKShaderConverter/MoltenVKShaderConverterTool/*.cpp
     ${PROJECT_DIR}/MoltenVKShaderConverter/MoltenVKShaderConverterTool/*.mm
@@ -66,15 +76,15 @@ target_link_libraries(MoltenVKShaderConverterTool PRIVATE
     MoltenVKCommon
     MoltenVKShaderConverter
     ${CONAN_LIBS}
-    ${FOUNDATION_FRAMEWORK}
     ${METAL_FRAMEWORK}
+    ${FOUNDATION_FRAMEWORK}
 )
 
 # MoltenVK
 # * direct dependencies:
 #   - external: cereal, spirv-cross and vulkan-headers
 #   - internal: MoltenVKShaderConverter and MoltenVKCommon
-#   - frameworks: CoreFoundation, CoreGraphics, QuartzCore, Foundation, IOKit, AppKit, IOSurface and Metal (TBC)
+#   - frameworks: Foundation, Metal, QuartzCore, AppKit, IOSurface + IOKit (Macos) or UIKit (iOS/tvOS)
 file(GLOB_RECURSE MVK_SOURCES
     ${PROJECT_DIR}/MoltenVK/*.m
     ${PROJECT_DIR}/MoltenVK/*.mm
@@ -96,14 +106,12 @@ target_link_libraries(MoltenVK PRIVATE
     MoltenVKCommon
     MoltenVKShaderConverter
     ${CONAN_LIBS}
-    ${CORE_FOUNDATION_FRAMEWORK}
-    ${CORE_GRAPHICS_FRAMEWORK}
-    ${QUARTZ_CORE_FRAMEWORK}
+    ${METAL_FRAMEWORK}
     ${FOUNDATION_FRAMEWORK}
-    ${IOKIT_FRAMEWORK}
+    ${QUARTZ_CORE_FRAMEWORK}
     ${APPKIT_FRAMEWORK}
     ${IOSURFACE_FRAMEWORK}
-    ${METAL_FRAMEWORK}
+    ${IOKIT_FRAMEWORK}
 )
 
 install(
