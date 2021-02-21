@@ -1,4 +1,4 @@
-from conans import ConanFile, tools
+from conans import ConanFile, CMake, tools
 from conans.errors import ConanInvalidConfiguration
 import os
 
@@ -19,6 +19,10 @@ class MoltenVKConan(ConanFile):
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
+    exports_sources = "CMakeLists.txt"
+    generators = "cmake"
+    _cmake = None
+
     @property
     def _source_subfolder(self):
         return "source_subfolder"
@@ -26,14 +30,13 @@ class MoltenVKConan(ConanFile):
     def configure(self):
         if self.options.shared:
             del self.options.fPIC
-        if not tools.is_apple_os(self.settings.os):
+        if self.settings.os not in ["Macos", "iOS", "tvOS"]:
             raise ConanInvalidConfiguration("MoltenVK only supported on MacOS, iOS and tvOS")
 
     def requirements(self):
         self.requires("cereal/1.3.0")
         self.requires("glslang/8.13.3559")
         self.requires("spirv-cross/20210115")
-        self.requires("spirv-headers/1.5.4")
         self.requires("spirv-tools/v2020.5")
         self.requires("vulkan-headers/1.2.162.0")
 
@@ -41,13 +44,42 @@ class MoltenVKConan(ConanFile):
         tools.get(**self.conan_data["sources"][self.version])
         os.rename("MoltenVK-" + self.version, self._source_subfolder)
 
+    def _patch_sources(self):
+        # Note: All these fixes might be very specific to 1.1.1
+        # Properly include external spirv-cross headers
+        files_to_patch = [
+            os.path.join(self._source_subfolder, "MoltenVK", "MoltenVK", "GPUObjects", "MVKPixelFormats.h"),
+            os.path.join(self._source_subfolder, "MoltenVKShaderConverter", "Common", "SPIRVSupport.cpp"),
+            os.path.join(self._source_subfolder, "MoltenVKShaderConverter", "MoltenVKShaderConverter", "SPIRVReflection.h"),
+            os.path.join(self._source_subfolder, "MoltenVKShaderConverter", "MoltenVKShaderConverter", "SPIRVToMSLConverter.h")
+        ]
+        for file_to_patch in files_to_patch:
+            tools.replace_in_file(file_to_patch, "SPIRV-Cross", "spirv_cross")
+        # Provide a random spirv-cross hash
+        tools.replace_in_file(os.path.join(self._source_subfolder, "MoltenVK", "MoltenVK", "GPUObjects", "MVKDevice.mm"),
+                              "#include \"mvkGitRevDerived.h\"",
+                              "static const char* mvkRevString = \"fc0750d67cfe825b887dd2cf25a42e9d9a013eb2\";")
+
+    def _configure_cmake(self):
+        if self._cmake:
+            return self._cmake
+        self._cmake = CMake(self)
+        self._cmake.configure()
+        return self._cmake
+
     def build(self):
-        # TODO
-        pass
+        self._patch_sources()
+        cmake = self._configure_cmake()
+        cmake.build()
 
     def package(self):
         self.copy("LICENSE", dst="licenses", src=self._source_subfolder)
-        # TODO
+        cmake = self._configure_cmake()
+        cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs()
+        self.cpp_info.libs = ["MoltenVK"]
+        self.cpp_info.frameworks = [
+            "CoreFoundation", "CoreGraphics", "QuartzCore", "Foundation",
+            "IOKit", "AppKit", "IOSurface", "Metal"
+        ]
