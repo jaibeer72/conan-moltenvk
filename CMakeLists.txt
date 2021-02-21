@@ -114,6 +114,13 @@ install(
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
+if(BUILD_SHARED_LIBS)
+    install(
+        FILES ${PROJECT_DIR}/MoltenVK/icd/MoltenVK_icd.json
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
+
 file(GLOB MVK_PUBLIC_HEADERS ${PROJECT_DIR}/MoltenVK/MoltenVK/API/*.h)
 install(
     FILES ${MVK_PUBLIC_HEADERS}
