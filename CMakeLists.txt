@@ -120,11 +120,11 @@ install(
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/MoltenVK
 )
 
-file(GLOB MVK_SCT_PUBLIC_HEADERS
+file(GLOB MVK_SC_PUBLIC_HEADERS
     ${PROJECT_DIR}/MoltenVKShaderConverter/MoltenVKShaderConverter/*Conversion.h
     ${PROJECT_DIR}/MoltenVKShaderConverter/MoltenVKShaderConverter/*Converter.h
 )
 install(
-    FILES ${MVK_SCT_PUBLIC_HEADERS}
+    FILES ${MVK_SC_PUBLIC_HEADERS}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/MoltenVKShaderConverter
 )
