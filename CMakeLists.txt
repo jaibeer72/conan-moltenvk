@@ -146,7 +146,7 @@ endif()
 
 # MoltenVK
 # * direct dependencies:
-#   - external: cereal, spirv-cross and vulkan-headers
+#   - external: cereal, spirv-cross and vulkan-headers (+ vulkan-portability if moltenvk < 1.1.0)
 #   - internal: MoltenVKShaderConverter and MoltenVKCommon
 #   - frameworks: Foundation, Metal, QuartzCore, AppKit, IOSurface + IOKit (Macos) or UIKit (iOS/tvOS)
 file(GLOB_RECURSE MVK_SOURCES
@@ -179,6 +179,9 @@ target_link_libraries(MoltenVK
         ${METAL_FRAMEWORK}
         ${IOSURFACE_FRAMEWORK}
 )
+if(MVK_VERSION VERSION_LESS "1.1.0")
+    target_link_libraries(MoltenVK PUBLIC CONAN_PKG::vulkan-portability)
+endif()
 target_compile_options(MoltenVK PRIVATE
     -Wno-unguarded-availability-new
     -Wno-deprecated-declarations
