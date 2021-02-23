@@ -63,13 +63,13 @@ class MoltenVKConan(ConanFile):
     def _spirv_cross_version(self):
         return {
             "1.1.1": "20210115", # can't compile with spirv-cross < 20210115
-            "1.1.0": "20200917", # compile only with spirv-cross 20200917
-            "1.0.44": "20200917", # compile only with spirv-cross 20200917
-            "1.0.43": "20200519", # compile only with spirv-cross 20200519
-            "1.0.42": "20200519", # compile only with spirv-cross 20200519
-            "1.0.41": "20200519", # compile only with spirv-cross 20200403 or 20200519
-            "1.0.40": "20200519", # compile only with spirv-cross 20200403 or 20200519
-            "1.0.39": "20200519", # compile only with spirv-cross 20200403 or 20200519
+            "1.1.0": "20200917", # compiles only with spirv-cross 20200917
+            "1.0.44": "20200917", # compiles only with spirv-cross 20200917
+            "1.0.43": "20200519", # compiles only with spirv-cross 20200519
+            "1.0.42": "20200519", # compiles only with spirv-cross 20200519
+            "1.0.41": "20200519", # compiles only with spirv-cross 20200403 or 20200519
+            "1.0.40": "20200519", # compiles only with spirv-cross 20200403 or 20200519
+            "1.0.39": "20200519", # compiles only with spirv-cross 20200403 or 20200519
         }[self.version]
 
     @property
