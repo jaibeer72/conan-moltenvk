@@ -189,6 +189,37 @@ target_compile_options(MoltenVK PRIVATE
 )
 list(APPEND MVK_INSTALL_TARGETS MoltenVK)
 
+# Custom Target to generate internal header file with spirv-cross commit hash, required by MoltenVK target
+set(SPIRV_CROSS_REVISION_FILE ${MVK_DIR}/ExternalRevisions/SPIRV-Cross_repo_revision)
+set(SPIRV_CROSS_REVISION_HEADER_DIR ${CMAKE_CURRENT_BINARY_DIR}/sc-hash-generated)
+if(MVK_VERSION VERSION_LESS "1.0.44")
+    set(SPIRV_CROSS_REVISION_HEADER ${SPIRV_CROSS_REVISION_HEADER_DIR}/SPIRV-Cross/mvkSpirvCrossRevisionDerived.h)
+    set(SPIRV_REV_VAR_NAME "spirvCrossRevisionString")
+else()
+    set(SPIRV_CROSS_REVISION_HEADER ${SPIRV_CROSS_REVISION_HEADER_DIR}/mvkGitRevDerived.h)
+    set(SPIRV_REV_VAR_NAME "mvkRevString")
+endif()
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/mvk_git_hash_generator.in
+    "file(READ @SPIRV_CROSS_REVISION_FILE@ MVK_SPIRV_CROSS_GIT_REV)\n"
+    "string(REPLACE \"\\n\" \"\" MVK_SPIRV_CROSS_GIT_REV \${MVK_SPIRV_CROSS_GIT_REV})\n"
+    "file(WRITE @SPIRV_CROSS_REVISION_HEADER@ \"static const char* @SPIRV_REV_VAR_NAME@ = \\\"\${MVK_SPIRV_CROSS_GIT_REV}\\\";\")\n"
+)
+configure_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/mvk_git_hash_generator.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mvk_git_hash_generator.cmake
+    @ONLY
+)
+add_custom_target(spirv-cross-commit-hash-header DEPENDS ${SPIRV_CROSS_REVISION_FILE} ${SPIRV_CROSS_REVISION_HEADER})
+add_custom_command(
+  COMMENT "Create ${SPIRV_CROSS_REVISION_HEADER}"
+  OUTPUT ${SPIRV_CROSS_REVISION_HEADER}
+  DEPENDS ${SPIRV_CROSS_REVISION_FILE}
+  COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/mvk_git_hash_generator.cmake"
+)
+add_dependencies(MoltenVK spirv-cross-commit-hash-header)
+target_include_directories(MoltenVK PRIVATE ${SPIRV_CROSS_REVISION_HEADER_DIR})
+
+# Installation
 install(
     TARGETS ${MVK_INSTALL_TARGETS}
     BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR}
