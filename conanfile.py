@@ -1,5 +1,6 @@
 from conans import ConanFile, CMake, tools
 from conans.errors import ConanInvalidConfiguration
+import glob
 import os
 
 required_conan_version = ">=1.32.0"
@@ -11,7 +12,7 @@ class MoltenVKConan(ConanFile):
                   "layers a subset of the high-performance, industry-standard " \
                   "Vulkan graphics and compute API over Apple's Metal " \
                   "graphics framework, enabling Vulkan applications to run " \
-                  "on iOS and macOS. "
+                  "on iOS and macOS."
     license = "Apache-2.0"
     topics = ("conan", "moltenvk", "khronos", "vulkan", "metal")
     homepage = "https://github.com/KhronosGroup/MoltenVK"
@@ -55,14 +56,21 @@ class MoltenVKConan(ConanFile):
         if self.options.with_spirv_tools:
             self.requires("spirv-tools/v2020.5")
         if tools.Version(self.version) < "1.1.0":
-            raise ConanInvalidConfiguration("MoltenVK < 1.1.0 requires vulkan-portability")
+            # raise ConanInvalidConfiguration("MoltenVK < 1.1.0 requires vulkan-portability, not yet available in CCI")
+            self.requires("vulkan-portability/0.2")
 
     @property
     def _spirv_cross_version(self):
         return {
             "1.1.1": "20210115", # can't compile with spirv-cross < 20210115
-            "1.1.0": "20200917", # works with spirv-cross 20200917 only
-        }.get(self.version)
+            "1.1.0": "20200917", # compile only with spirv-cross 20200917
+            "1.0.44": "20200917", # compile only with spirv-cross 20200917
+            "1.0.43": "20200519", # compile only with spirv-cross 20200519
+            "1.0.42": "20200519", # compile only with spirv-cross 20200519
+            "1.0.41": "20200519", # compile only with spirv-cross 20200403 or 20200519
+            "1.0.40": "20200519", # compile only with spirv-cross 20200403 or 20200519
+            "1.0.39": "20200519", # compile only with spirv-cross 20200403 or 20200519
+        }[self.version]
 
     @property
     def _vulkan_headers_version(self):
@@ -97,10 +105,10 @@ class MoltenVKConan(ConanFile):
             "1.0.19": "1.1.82.0",
             "1.0.18": "1.1.82.0",
             "1.0.17": "1.1.82.0",
-        }.get(self.version)
+        }[self.version]
 
     def package_id(self):
-        # MoltenVK >=1.42 requires at least XCode 12.0 (11.4 actually) at build
+        # MoltenVK >=1.O.42 requires at least XCode 12.0 (11.4 actually) at build
         # time but can be consumed by older compiler versions
         if tools.Version(self.version) >= "1.0.42":
             if tools.Version(self.settings.compiler.version) < "12.0":
@@ -115,22 +123,32 @@ class MoltenVKConan(ConanFile):
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version])
-        os.rename("MoltenVK-" + self.version, self._source_subfolder)
+        extracted_dir = glob.glob("MoltenVK-*")[0]
+        os.rename(extracted_dir, self._source_subfolder)
 
     def _patch_sources(self):
         for patch in self.conan_data.get("patches", {}).get(self.version, []):
             tools.patch(**patch)
-        if tools.Version(self.version) >= "1.1.0":
-            tools.replace_in_file(os.path.join(self._source_subfolder, "MoltenVK", "MoltenVK", "GPUObjects", "MVKDevice.mm"),
+        # Inject commit hash of spirv-cross
+        mvkdevice_mm = os.path.join(self._source_subfolder, "MoltenVK", "MoltenVK", "GPUObjects", "MVKDevice.mm")
+        if tools.Version(self.version) < "1.0.44":
+            tools.replace_in_file(mvkdevice_mm,
+                                  "#include <SPIRV-Cross/mvkSpirvCrossRevisionDerived.h>",
+                                  "static const char* spirvCrossRevisionString = \"{}\";".format(self._spirv_cross_commit_hash))
+        else:
+            tools.replace_in_file(mvkdevice_mm,
                                   "#include \"mvkGitRevDerived.h\"",
-                                  "static const char* mvkRevString = \"{}\";".format(self._mvk_commit_hash))
+                                  "static const char* mvkRevString = \"{}\";".format(self._spirv_cross_commit_hash))
 
     @property
-    def _mvk_commit_hash(self):
+    def _spirv_cross_commit_hash(self):
         return {
-            "1.1.1": "49de6604b0395057e7d3b7ce7001ed29b25708f7",
-            "1.1.0": "b9b78def172074872bfbb1015ccf75eeec554ae2",
-        }.get(self.version)
+            "20210115": "9acb9ec31f5a8ef80ea6b994bb77be787b08d3d1",
+            "20200917": "8891bd35120ca91c252a66ccfdc3f9a9d03c70cd",
+            "20200629": "b1082c10afe15eef03e8b12d66008388ce2a468c",
+            "20200519": "3c43f055df0d7b6948af64c825bf93beb8ab6418",
+            "20200403": "6637610b16aacfe43c77ad4060da62008a83cd12"
+        }[self.deps_cpp_info["spirv-cross"].version]
 
     def _configure_cmake(self):
         if self._cmake:
