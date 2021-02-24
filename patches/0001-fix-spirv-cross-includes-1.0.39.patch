@@ -15,7 +15,7 @@
  
  #include "SPIRVSupport.h"
 -#include <SPIRV-Cross/spirv.hpp>
-+#include <spirv_cross/spirv.hpp>
++#include <spirv.hpp>
  #import <CoreFoundation/CFByteOrder.h>
  
  using namespace mvk;
@@ -27,8 +27,8 @@
  #include "SPIRVReflection.h"
 -#include <SPIRV-Cross/spirv_parser.hpp>
 -#include <SPIRV-Cross/spirv_reflect.hpp>
-+#include <spirv_cross/spirv_parser.hpp>
-+#include <spirv_cross/spirv_reflect.hpp>
++#include <spirv_parser.hpp>
++#include <spirv_reflect.hpp>
  
  namespace mvk {
  
@@ -40,8 +40,8 @@
  
 -#include <SPIRV-Cross/spirv.hpp>
 -#include <SPIRV-Cross/spirv_common.hpp>
-+#include <spirv_cross/spirv.hpp>
-+#include <spirv_cross/spirv_common.hpp>
++#include <spirv.hpp>
++#include <spirv_common.hpp>
  #include <string>
  #include <vector>
  
@@ -53,8 +53,8 @@
  
 -#include <SPIRV-Cross/spirv.hpp>
 -#include <SPIRV-Cross/spirv_msl.hpp>
-+#include <spirv_cross/spirv.hpp>
-+#include <spirv_cross/spirv_msl.hpp>
++#include <spirv.hpp>
++#include <spirv_msl.hpp>
  #include <string>
  #include <vector>
  #include <unordered_map>
