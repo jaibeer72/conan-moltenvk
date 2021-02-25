@@ -23,6 +23,9 @@ sources:
   "1.0.39":
     url: "https://github.com/KhronosGroup/MoltenVK/archive/v1.0.39.tar.gz"
     sha256: "cd628a7bf42edc1c66b64e9bf4643da3c1e34de3f1f44e2e359a0e4b722ba553"
+  "1.0.38":
+    url: "https://github.com/KhronosGroup/MoltenVK/archive/v1.0.38.tar.gz"
+    sha256: "6bd6570bf75e3c54950e05a2724143ef85672f9acfe5161d9f8de42ad6a3d314"
 patches:
   "1.1.1":
     - patch_file: "patches/0001-fix-spirv-cross-includes-1.1.x.patch"
@@ -40,11 +43,14 @@ patches:
     - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.42.patch"
       base_path: "source_subfolder"
   "1.0.41":
-    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.39.patch"
+    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.38.patch"
       base_path: "source_subfolder"
   "1.0.40":
-    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.39.patch"
+    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.38.patch"
       base_path: "source_subfolder"
   "1.0.39":
-    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.39.patch"
+    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.38.patch"
+      base_path: "source_subfolder"
+  "1.0.38":
+    - patch_file: "patches/0001-fix-spirv-cross-includes-1.0.38.patch"
       base_path: "source_subfolder"
